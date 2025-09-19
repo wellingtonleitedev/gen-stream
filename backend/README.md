@@ -1,6 +1,15 @@
 # FastAPI Backend
 
-A minimal FastAPI backend with hello, health, SSE demo endpoints, and job generation API.
+A FastAPI backend with async job processing, real-time progress streaming via SSE, retry mechanisms, and metrics tracking.
+
+## Features
+
+- **Job Management**: Create and track image generation jobs
+- **Async Processing**: Bounded concurrent processing with configurable limits
+- **Retry Logic**: Automatic retry with exponential backoff for failed tasks  
+- **Real-time Progress**: Server-Sent Events streaming for live job progress
+- **Polling Support**: REST endpoint for clients without SSE support
+- **Metrics**: TTFI (Time to First Item) and total duration tracking
 
 ## Setup
 
@@ -20,24 +29,37 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8080
 ```
 
-## Test
+## API Endpoints
 
-Test the health endpoint:
-```bash
-curl http://localhost:8080/health
-```
-Expected response: `{"status":"ok"}`
+### Basic Endpoints
+- `GET /health` - Health check
+
+### Job Management
+- `POST /api/generate` - Create new generation job
+- `GET /api/generate/{job_id}` - Poll current results (alternative to SSE)
+- `GET /api/generate/{job_id}/stream` - Stream real-time progress via SSE  
+- `GET /api/generate/{job_id}/metrics` - Get job performance metrics
+
+## Example Usage
 
 Create a generation job:
 ```bash
 curl -X POST "http://localhost:8080/api/generate" \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "A beautiful sunset", "num_images": 5}'
+  -d '{"prompt": "A beautiful sunset", "num_images": 8}'
 ```
-Expected response: `{"job_id": "uuid-string"}`
 
-Fetch a job by ID (replace with actual job ID):
+Stream progress in real-time (replace JOB_ID):
 ```bash
-curl http://localhost:8080/api/generate/your-job-id-here
+curl -N http://localhost:8080/api/generate/JOB_ID/stream
 ```
-Expected: Complete job state with prompt, status, results, etc.
+
+Poll for progress (replace JOB_ID):
+```bash
+curl http://localhost:8080/api/generate/JOB_ID
+```
+
+Get job metrics (replace JOB_ID):
+```bash
+curl http://localhost:8080/api/generate/JOB_ID/metrics
+```
