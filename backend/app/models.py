@@ -33,6 +33,8 @@ class Job(BaseModel):
     status: JobStatus = JobStatus.PENDING
     created_at: datetime = Field(default_factory=datetime.utcnow)
     results: List[ImageResult] = Field(default_factory=list)
+    total_ms: Optional[int] = None
+    ttfi_ms: Optional[int] = None
 
     def __init__(self, **data):
         super().__init__(**data)
