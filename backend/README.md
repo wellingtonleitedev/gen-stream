@@ -28,9 +28,7 @@ pip install -r requirements.txt
 3. Set up environment variables (create a `.env` file):
 ```bash
 cp .env.example .env
-
-# REPLICATE_API_TOKEN: Your Replicate API token (required)
-# REPLICATE_MODEL: Model to use (default: "stability-ai/stable-diffusion")
+# Edit the .env file and configure
 ```
 
 4. Run the server:
@@ -43,6 +41,14 @@ uvicorn app.main:app --reload --port 8080
 ### Basic Endpoints
 - `GET /health` - Health check
 
+### Authentication Endpoint
+
+**Hardcoded Demo Credentials**
+- **Email**: `test@example.com`
+- **Password**: `password123`
+
+- `POST /api/auth/login`
+
 ### Job Management
 - `POST /api/generate` - Create new generation job
 - `GET /api/generate/{job_id}` - Poll current results (alternative to SSE)
@@ -51,24 +57,45 @@ uvicorn app.main:app --reload --port 8080
 
 ## Example Usage
 
-Create a generation job:
+### 1. Login and get access token:
 ```bash
+curl -X POST "http://localhost:8080/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "password123"}'
+```
+
+Response:
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "bearer", 
+  "expires_in": 3600
+}
+```
+
+### 2. Create a generation job (protected):
+```bash
+TOKEN="your_access_token_here"
 curl -X POST "http://localhost:8080/api/generate" \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "A beautiful sunset", "num_images": 8}'
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"prompt": "A beautiful sunset over mountains", "num_images": 5}'
 ```
 
-Stream progress in real-time (replace JOB_ID):
+### 3. Stream progress in real-time (protected):
 ```bash
-curl -N http://localhost:8080/api/generate/JOB_ID/stream
+curl -N "http://localhost:8080/api/generate/JOB_ID/stream" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-Poll for progress (replace JOB_ID):
+### 4. Poll for progress (protected):
 ```bash
-curl http://localhost:8080/api/generate/JOB_ID
+curl "http://localhost:8080/api/generate/JOB_ID" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-Get job metrics (replace JOB_ID):
+### 5. Get job metrics (protected):
 ```bash
-curl http://localhost:8080/api/generate/JOB_ID/metrics
+curl "http://localhost:8080/api/generate/JOB_ID/metrics" \
+  -H "Authorization: Bearer $TOKEN"
 ```
