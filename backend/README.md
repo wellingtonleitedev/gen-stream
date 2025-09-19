@@ -1,6 +1,6 @@
 # FastAPI Backend
 
-Backend service built with Python and FastAPI that powers batch image generation workflows. It provides authentication, job creation, concurrency-controlled integration with external AI models, real-time progress streaming via SSE, and metrics reporting (e.g. time-to-first-image, total job duration). Designed to be lightweight, resilient, and easy to extend for production-ready scenarios.
+A minimal FastAPI backend with hello, health, SSE demo endpoints, and job generation API.
 
 ## Setup
 
@@ -22,9 +22,22 @@ uvicorn app.main:app --reload --port 8080
 
 ## Test
 
-Test the hello endpoint:
+Test the health endpoint:
 ```bash
-curl http://localhost:8080/hello
+curl http://localhost:8080/health
 ```
+Expected response: `{"status":"ok"}`
 
-Expected response: `{"message":"hello world"}`
+Create a generation job:
+```bash
+curl -X POST "http://localhost:8080/api/generate" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "A beautiful sunset", "num_images": 5}'
+```
+Expected response: `{"job_id": "uuid-string"}`
+
+Fetch a job by ID (replace with actual job ID):
+```bash
+curl http://localhost:8080/api/generate/your-job-id-here
+```
+Expected: Complete job state with prompt, status, results, etc.
