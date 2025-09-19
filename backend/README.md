@@ -1,6 +1,16 @@
 # FastAPI Backend
 
-Backend service built with Python and FastAPI that powers batch image generation workflows. It provides authentication, job creation, concurrency-controlled integration with external AI models, real-time progress streaming via SSE, and metrics reporting (e.g. time-to-first-image, total job duration). Designed to be lightweight, resilient, and easy to extend for production-ready scenarios.
+A FastAPI backend with async job processing, real-time progress streaming via SSE, retry mechanisms, and Replicate API integration.
+
+## Features
+
+- **Job Management**: Create and track image generation jobs
+- **Replicate Integration**: Real image generation using Replicate's API
+- **Async Processing**: Bounded concurrent processing with configurable limits
+- **Retry Logic**: Automatic retry with exponential backoff for failed tasks  
+- **Real-time Progress**: Server-Sent Events streaming for live job progress
+- **Polling Support**: REST endpoint for clients without SSE support
+- **Metrics**: TTFI (Time to First Item) and total duration tracking
 
 ## Setup
 
@@ -15,16 +25,77 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Run the server:
+3. Set up environment variables (create a `.env` file):
+```bash
+cp .env.example .env
+# Edit the .env file and configure
+```
+
+4. Run the server:
 ```bash
 uvicorn app.main:app --reload --port 8080
 ```
 
-## Test
+## API Endpoints
 
-Test the hello endpoint:
+### Basic Endpoints
+- `GET /health` - Health check
+
+### Authentication Endpoint
+
+**Hardcoded Demo Credentials**
+- **Email**: `test@example.com`
+- **Password**: `password123`
+
+- `POST /api/auth/login`
+
+### Job Management
+- `POST /api/generate` - Create new generation job
+- `GET /api/generate/{job_id}` - Poll current results (alternative to SSE)
+- `GET /api/generate/{job_id}/stream` - Stream real-time progress via SSE  
+- `GET /api/generate/{job_id}/metrics` - Get job performance metrics
+
+## Example Usage
+
+### 1. Login and get access token:
 ```bash
-curl http://localhost:8080/hello
+curl -X POST "http://localhost:8080/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "password123"}'
 ```
 
-Expected response: `{"message":"hello world"}`
+Response:
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "bearer", 
+  "expires_in": 3600
+}
+```
+
+### 2. Create a generation job (protected):
+```bash
+TOKEN="your_access_token_here"
+curl -X POST "http://localhost:8080/api/generate" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"prompt": "A beautiful sunset over mountains", "num_images": 5}'
+```
+
+### 3. Stream progress in real-time (protected):
+```bash
+curl -N "http://localhost:8080/api/generate/JOB_ID/stream" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 4. Poll for progress (protected):
+```bash
+curl "http://localhost:8080/api/generate/JOB_ID" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 5. Get job metrics (protected):
+```bash
+curl "http://localhost:8080/api/generate/JOB_ID/metrics" \
+  -H "Authorization: Bearer $TOKEN"
+```
