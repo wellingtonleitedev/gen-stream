@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from .sse import sse_headers, job_progress_stream
 from .models import GenerateRequest, GenerateResponse, Job
 from .store import job_store
 from .runner import job_runner
+from .auth import auth_service, get_current_user, LoginRequest, LoginResponse
 
 app = FastAPI()
 
@@ -21,8 +22,15 @@ app.add_middleware(
 async def health():
     return {"status": "ok"}
 
+
+@app.post("/api/auth/login", response_model=LoginResponse)
+async def login(request: LoginRequest):
+    """Authenticate user and return access token"""
+    return await auth_service.login(request)
+
+
 @app.post("/api/generate", response_model=GenerateResponse)
-async def create_generation_job(request: GenerateRequest):
+async def create_generation_job(request: GenerateRequest, current_user: str = Depends(get_current_user)):
     job = Job(prompt=request.prompt, num_images=request.num_images)
     await job_store.create_job(job)
     
@@ -32,7 +40,7 @@ async def create_generation_job(request: GenerateRequest):
 
 
 @app.get("/api/generate/{job_id}/stream")
-async def stream_job_progress(job_id: str):
+async def stream_job_progress(job_id: str, current_user: str = Depends(get_current_user)):
     # Check if job exists
     job = await job_store.get_job(job_id)
     if not job:
@@ -42,7 +50,7 @@ async def stream_job_progress(job_id: str):
 
 
 @app.get("/api/generate/{job_id}/metrics")
-async def get_job_metrics(job_id: str):
+async def get_job_metrics(job_id: str, current_user: str = Depends(get_current_user)):
     job = await job_store.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -59,7 +67,7 @@ async def get_job_metrics(job_id: str):
 
 
 @app.get("/api/generate/{job_id}")
-async def get_job_results(job_id: str):
+async def get_job_results(job_id: str, current_user: str = Depends(get_current_user)):
     """Polling endpoint to get current job results without SSE"""
     job = await job_store.get_job(job_id)
     if not job:
