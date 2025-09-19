@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AppProvider } from "./provider";
 import { Layout } from "@/components/layout";
-import { HomePage } from "@/pages/home";
-import { LoginPage } from "@/pages/login";
+import { HomePage } from "./routes/home";
+import { LoginPage } from "./routes/login";
 
 export function App() {
   return (
