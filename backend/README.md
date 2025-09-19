@@ -1,10 +1,11 @@
 # FastAPI Backend
 
-A FastAPI backend with async job processing, real-time progress streaming via SSE, retry mechanisms, and metrics tracking.
+A FastAPI backend with async job processing, real-time progress streaming via SSE, retry mechanisms, and Replicate API integration.
 
 ## Features
 
 - **Job Management**: Create and track image generation jobs
+- **Replicate Integration**: Real image generation using Replicate's API
 - **Async Processing**: Bounded concurrent processing with configurable limits
 - **Retry Logic**: Automatic retry with exponential backoff for failed tasks  
 - **Real-time Progress**: Server-Sent Events streaming for live job progress
@@ -24,7 +25,15 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Run the server:
+3. Set up environment variables (create a `.env` file):
+```bash
+cp .env.example .env
+
+# REPLICATE_API_TOKEN: Your Replicate API token (required)
+# REPLICATE_MODEL: Model to use (default: "stability-ai/stable-diffusion")
+```
+
+4. Run the server:
 ```bash
 uvicorn app.main:app --reload --port 8080
 ```

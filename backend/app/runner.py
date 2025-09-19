@@ -6,6 +6,7 @@ import os
 
 from .models import Job, JobStatus, ResultStatus
 from .store import job_store
+from .replicate_client import replicate_client
 
 
 class JobRunner:
@@ -89,16 +90,23 @@ class JobRunner:
         async with self.semaphore:
             last_error = None
             
+        
+            job = await job_store.get_job(job_id)
+            if not job:
+                return datetime.utcnow()
+            
+            prompt = job.prompt
+            
             for attempt in range(self.max_retries):
                 try:
-                    success, error_msg = await self._simulate_generation_task()
+                    success, image_url, error_msg = await replicate_client.generate_image(prompt)
                     
-                    if success:
+                    if success and image_url:
                         completion_time = datetime.utcnow()
-                        await self._update_result_success(job_id, index, completion_time)
+                        await self._update_result_success(job_id, index, completion_time, image_url)
                         return completion_time
                     else:
-                        last_error = error_msg
+                        last_error = error_msg or "Unknown generation error"
                         
                         if attempt == self.max_retries - 1:
                             await self._update_result_failure(job_id, index, last_error)
@@ -122,22 +130,12 @@ class JobRunner:
             
             return datetime.utcnow()
 
-    async def _simulate_generation_task(self) -> Tuple[bool, str]:
-        """Simulate image generation with variable latency and failure rate"""
-        delay = random.uniform(1.0, 5.0)
-        await asyncio.sleep(delay)
-        
-        success = random.random() > 0.2
-        error_msg = "Simulated generation failure" if not success else None
-        
-        return success, error_msg
-
-    async def _update_result_success(self, job_id: str, index: int, completion_time: datetime):
+    async def _update_result_success(self, job_id: str, index: int, completion_time: datetime, image_url: str):
         """Update job result for successful completion"""
         job = await job_store.get_job(job_id)
         if job and index < len(job.results):
             job.results[index].status = ResultStatus.COMPLETED
-            job.results[index].url = f"https://example.com/image_{job_id}_{index}.jpg"
+            job.results[index].url = image_url
             job.results[index].error = None
             await job_store.update_job(job)
 
