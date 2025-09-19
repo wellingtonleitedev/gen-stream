@@ -11,6 +11,7 @@ The system allows users to authenticate, submit prompts, generate images in para
 
 ## 🛠 Tech Stack
 	•	Backend: Python · FastAPI · Uvicorn · httpx · asyncio
+	•	Frontend: React · TailwindCSS · shadcn · React Query · React Hook Form · Zod
 
 ## ▶️ Getting Started
 
