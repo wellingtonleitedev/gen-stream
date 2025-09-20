@@ -3,9 +3,9 @@ import { useMutation } from "@tanstack/react-query";
 
 import api from "@/lib/api";
 import { storage } from "@/utils/auth";
-import type { LoginFormData } from "../schemas/login-schema";
+import type { LoginRequest, LoginResponse } from "../types";
 
-const login = async (data: LoginFormData) => {
+const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const response = await api.post("/auth/login", data);
   return response.data;
 };
@@ -17,7 +17,7 @@ export const useLogin = () => {
     mutationKey: ["login"],
     mutationFn: login,
     onSuccess: (data) => {
-      storage.setToken(data.token);
+      storage.setToken(data.access_token);
       navigate("/");
     },
   });

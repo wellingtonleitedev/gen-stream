@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { useRequireAuth } from "@/hooks/use-auth";
+import { GenerationFlow } from "@/features/generation/components";
 
 export const HomePage = () => {
   const isAuthenticated = useRequireAuth();
@@ -9,12 +9,22 @@ export const HomePage = () => {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-4">Home</h1>
-      <p className="text-muted-foreground mb-4">
-        Welcome to the Image Generation System
-      </p>
-      <Button>Test Button</Button>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <header className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            AI Image Generator
+          </h1>
+          <p className="text-gray-600">
+            Generate high-quality images using AI with real-time progress
+            tracking
+          </p>
+        </header>
+
+        <main>
+          <GenerationFlow />
+        </main>
+      </div>
     </div>
   );
 };
