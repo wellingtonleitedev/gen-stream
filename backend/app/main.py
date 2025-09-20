@@ -1,18 +1,21 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from dotenv import load_dotenv
 from .sse import sse_headers, job_progress_stream
+from .websocket import websocket_job_stream, verify_websocket_token, ws_manager
 from .models import GenerateRequest, GenerateResponse, Job
 from .store import job_store
 from .runner import job_runner
 from .auth import auth_service, get_current_user, LoginRequest, LoginResponse
 
+load_dotenv()
+
 app = FastAPI()
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
@@ -41,12 +44,33 @@ async def create_generation_job(request: GenerateRequest, current_user: str = De
 
 @app.get("/api/generate/{job_id}/stream")
 async def stream_job_progress(job_id: str, current_user: str = Depends(get_current_user)):
-    # Check if job exists
     job = await job_store.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
     return StreamingResponse(job_progress_stream(job_id), headers=sse_headers())
+
+
+@app.websocket("/api/generate/{job_id}")
+async def websocket_job_progress(websocket: WebSocket, job_id: str, token: str = Query(...)):
+    """WebSocket endpoint for job progress with token-based auth"""
+    if not verify_websocket_token(token):
+        await websocket.close(code=1008, reason="Invalid token")
+        return
+    
+    job = await job_store.get_job(job_id)
+    if not job:
+        await websocket.close(code=1000, reason="Job not found")
+        return
+    
+    await ws_manager.connect(websocket, job_id)
+    
+    try:
+        await websocket_job_stream(websocket, job_id)
+    except WebSocketDisconnect:
+        pass
+    finally:
+        ws_manager.disconnect(websocket, job_id)
 
 
 @app.get("/api/generate/{job_id}/metrics")

@@ -8,8 +8,10 @@ A FastAPI backend with async job processing, real-time progress streaming via SS
 - **Replicate Integration**: Real image generation using Replicate's API
 - **Async Processing**: Bounded concurrent processing with configurable limits
 - **Retry Logic**: Automatic retry with exponential backoff for failed tasks  
-- **Real-time Progress**: Server-Sent Events streaming for live job progress
-- **Polling Support**: REST endpoint for clients without SSE support
+- **Real-time Progress**: Multiple transport options for live job progress:
+  - Server-Sent Events (SSE) streaming
+  - WebSocket streaming with same payload format
+- **Polling Support**: REST endpoint for clients without real-time support
 - **Metrics**: TTFI (Time to First Item) and total duration tracking
 
 ## Setup
@@ -64,15 +66,6 @@ curl -X POST "http://localhost:8080/api/auth/login" \
   -d '{"email": "test@example.com", "password": "password123"}'
 ```
 
-Response:
-```json
-{
-  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "token_type": "bearer", 
-  "expires_in": 3600
-}
-```
-
 ### 2. Create a generation job (protected):
 ```bash
 TOKEN="your_access_token_here"
@@ -83,9 +76,17 @@ curl -X POST "http://localhost:8080/api/generate" \
 ```
 
 ### 3. Stream progress in real-time (protected):
+
+**Server-Sent Events:**
 ```bash
 curl -N "http://localhost:8080/api/generate/JOB_ID/stream" \
   -H "Authorization: Bearer $TOKEN"
+```
+
+**WebSocket (using wscat or similar tool):**
+```bash
+# Install wscat: npm install -g wscat
+wscat -c "ws://localhost:8080/api/generate/JOB_ID?token=$TOKEN"
 ```
 
 ### 4. Poll for progress (protected):
