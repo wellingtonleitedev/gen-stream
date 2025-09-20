@@ -1,9 +1,11 @@
-import { toast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { Button } from "@/components/ui/button";
+
 import { GenerationForm } from "./generation-form";
+import { MetricsDisplay } from "./metrics-display";
 import { ImageResultsGrid } from "./image-results";
+import { ImageGridSkeleton } from "./image-skeleton";
 import { useGetJobStatus } from "../api/get-job-status";
 import { useGenerateImages } from "../api/generate-images";
 import { GenerationProgress } from "./generation-progress";
@@ -12,73 +14,82 @@ import type { GenerateRequest } from "../types";
 
 export function GenerationFlow() {
   const queryClient = useQueryClient();
-  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
 
-  const onGenerateComplete = (jobId: string) => {
-    setCurrentJobId(jobId);
-  };
+  const {
+    data,
+    reset,
+    mutateAsync: generateImages,
+    isPending: isGenerating,
+  } = useGenerateImages();
 
-  const { mutateAsync: generateImages, isPending: isGenerating } =
-    useGenerateImages(onGenerateComplete);
-
-  const { data: jobStatus } = useGetJobStatus({ jobId: currentJobId || "" });
+  const { data: jobStatus } = useGetJobStatus(data?.job_id || "");
 
   const handleGenerate = async (data: GenerateRequest) => {
     await generateImages(data);
   };
 
   const handleNewGeneration = () => {
-    setCurrentJobId(null);
+    reset();
+    queryClient.invalidateQueries({ queryKey: ["job-metrics"] });
     queryClient.invalidateQueries({ queryKey: ["get-job-status"] });
   };
 
-  useEffect(() => {
-    if (jobStatus?.status) {
-      if (jobStatus.status === "completed") {
-        const completedCount = jobStatus.results.filter(
-          (r) => r.status === "completed"
-        ).length;
-        toast({
-          title:
-            jobStatus.status === "completed"
-              ? "Generation Complete!"
-              : "Generation Failed",
-          description:
-            jobStatus.status === "completed"
-              ? `Successfully generated ${completedCount} images.`
-              : `Generation failed. ${completedCount} images completed successfully.`,
-          variant: jobStatus.status === "completed" ? "default" : "destructive",
-        });
-      }
-    }
-  }, [jobStatus?.status, jobStatus?.results]);
-
   return (
-    <div className="space-y-6">
-      {!currentJobId ? (
-        <GenerationForm onSubmit={handleGenerate} isGenerating={isGenerating} />
+    <div className="space-y-8">
+      {!data?.job_id ? (
+        <div>
+          <h1 className="text-3xl font-bold mb-6">Generate Images</h1>
+          <GenerationForm
+            onSubmit={handleGenerate}
+            isGenerating={isGenerating}
+          />
+        </div>
       ) : (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Generation in Progress</h2>
-            <button
+            <Button
               onClick={handleNewGeneration}
-              className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+              variant="outline"
+              size="sm"
+              aria-label="Start a new image generation"
             >
               New Generation
-            </button>
+            </Button>
           </div>
 
           {jobStatus && (
             <>
               <GenerationProgress jobStatus={jobStatus} />
 
-              {jobStatus.results.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Results</h3>
-                  <ImageResultsGrid items={jobStatus.results} />
-                </div>
+              {jobStatus.status === "completed" && data?.job_id && (
+                <MetricsDisplay
+                  jobId={data.job_id}
+                  isCompleted={jobStatus.status === "completed"}
+                />
               )}
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Results</h3>
+                  {jobStatus.status === "completed" && (
+                    <div className="text-sm text-muted-foreground">
+                      {
+                        jobStatus.results.filter(
+                          (r) => r.status === "completed"
+                        ).length
+                      }{" "}
+                      of {jobStatus.results.length} completed
+                    </div>
+                  )}
+                </div>
+
+                {jobStatus.results.length ? (
+                  <ImageResultsGrid items={jobStatus.results} />
+                ) : (
+                  <ImageGridSkeleton count={4} />
+                )}
+              </div>
             </>
           )}
         </div>

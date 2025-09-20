@@ -11,7 +11,7 @@ const generateImages = async (
   return response.data;
 };
 
-export const useGenerateImages = (onSuccess: (jobId: string) => void) => {
+export const useGenerateImages = () => {
   return useMutation({
     mutationKey: ["generate-images"],
     mutationFn: generateImages,
@@ -20,7 +20,6 @@ export const useGenerateImages = (onSuccess: (jobId: string) => void) => {
         title: "Generation Started",
         description: `Started generating images. Job ID: ${data.job_id}`,
       });
-      onSuccess(data.job_id);
     },
     onError: (error) => {
       toast({

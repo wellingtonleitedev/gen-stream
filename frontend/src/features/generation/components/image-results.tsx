@@ -31,8 +31,16 @@ export function ImageResult({ item, index, className }: ImageResultProps) {
         </div>
 
         {item.status === "running" && (
-          <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-            <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+          <div
+            className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center"
+            aria-label={`Image ${index + 1} is currently being generated`}
+            role="img"
+          >
+            <div
+              className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full"
+              aria-hidden="true"
+            ></div>
+            <span className="sr-only">Loading image {index + 1}</span>
           </div>
         )}
 
@@ -40,20 +48,29 @@ export function ImageResult({ item, index, className }: ImageResultProps) {
           <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
             <img
               src={item.url}
-              alt={`Generated image ${index + 1}`}
-              className="w-full h-full object-cover"
+              alt={`Generated image ${index + 1} from the prompt`}
+              className="w-full h-full object-cover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               loading="lazy"
+              tabIndex={0}
             />
           </div>
         )}
 
         {item.status === "failed" && (
-          <div className="aspect-square bg-red-50 rounded-lg flex flex-col items-center justify-center p-4">
+          <div
+            className="aspect-square bg-red-50 rounded-lg flex flex-col items-center justify-center p-4"
+            role="alert"
+            aria-label={`Image ${index + 1} failed to generate`}
+          >
             <div className="text-red-500 text-center">
-              <div className="text-lg mb-2">✕</div>
+              <div className="text-lg mb-2" aria-hidden="true">
+                ✕
+              </div>
               <div className="text-sm">Failed to generate</div>
               {item.error && (
-                <div className="text-xs text-red-400 mt-1">{item.error}</div>
+                <div className="text-xs text-red-400 mt-1" role="status">
+                  {item.error}
+                </div>
               )}
             </div>
           </div>
@@ -72,9 +89,13 @@ export function ImageResultsGrid({ items, className }: ImageResultsGridProps) {
   return (
     <div
       className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${className}`}
+      role="grid"
+      aria-label={`Generated images grid with ${items.length} images`}
     >
       {items.map((item, index) => (
-        <ImageResult key={item.id} item={item} index={index} />
+        <div key={item.id} role="gridcell">
+          <ImageResult item={item} index={index} />
+        </div>
       ))}
     </div>
   );
