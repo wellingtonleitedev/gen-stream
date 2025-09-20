@@ -5,6 +5,7 @@ import jwt
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
+from .config import config
 
 
 class LoginRequest(BaseModel):
@@ -20,7 +21,7 @@ class LoginResponse(BaseModel):
 
 class AuthService:
     def __init__(self):
-        self.secret = os.getenv("AUTH_SECRET", "your-secret-key-change-in-production")
+        self.secret = config.AUTH_SECRET
         self.expires_minutes = 60
         self.algorithm = "HS256"
         

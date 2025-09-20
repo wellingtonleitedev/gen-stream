@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from dotenv import load_dotenv
+from .config import config
 from .sse import sse_headers, job_progress_stream
 from .websocket import websocket_job_stream, verify_websocket_token, ws_manager
 from .models import GenerateRequest, GenerateResponse, Job
@@ -9,13 +9,11 @@ from .store import job_store
 from .runner import job_runner
 from .auth import auth_service, get_current_user, LoginRequest, LoginResponse
 
-load_dotenv()
-
-app = FastAPI()
+app = FastAPI(title="AI Image Generation API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=config.ALLOWED_ORIGINS,
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],

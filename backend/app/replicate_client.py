@@ -6,11 +6,16 @@ import json
 from datetime import datetime
 
 
+import replicate
+import os
+from .config import config
+
+
 class ReplicateClient:
     def __init__(self):
-        self.api_token = os.getenv("REPLICATE_API_TOKEN")
-        self.model = os.getenv("REPLICATE_MODEL", "stability-ai/stable-diffusion")
-        self.model_version = os.getenv("REPLICATE_MODEL_VERSION")
+        self.api_token = config.REPLICATE_API_TOKEN
+        self.model = config.REPLICATE_MODEL
+        self.model_version = config.REPLICATE_MODEL_VERSION
         self.base_url = "https://api.replicate.com/v1"
         self.timeout = httpx.Timeout(30.0, connect=10.0)
         self._initialized = False

@@ -3,9 +3,10 @@ import json
 import jwt
 from datetime import datetime
 from typing import Set
-from fastapi import WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import WebSocket, WebSocketDisconnect, HTTPException, Query
 from .store import job_store
 from .models import JobStatus
+from .config import config
 
 
 class WebSocketManager:
@@ -40,14 +41,23 @@ class WebSocketManager:
 ws_manager = WebSocketManager()
 
 
-def verify_websocket_token(token: str) -> bool:
-    """Verify JWT token for WebSocket authentication"""
+async def verify_websocket_token(websocket: WebSocket, token: str = Query(...)):
+    """Verify WebSocket authentication token."""
     try:
-        import os
-        secret = os.getenv("AUTH_SECRET", "your-secret-key-change-in-production")
+        secret = config.AUTH_SECRET
         payload = jwt.decode(token, secret, algorithms=["HS256"])
+        
+        exp_timestamp = payload.get('exp')
+        if exp_timestamp and exp_timestamp < jwt.datetime.datetime.now().timestamp():
+            await websocket.close(code=4001, reason="Token expired")
+            return False
+            
         return True
-    except:
+    except jwt.InvalidTokenError:
+        await websocket.close(code=4001, reason="Invalid token")
+        return False
+    except Exception as e:
+        await websocket.close(code=4000, reason=f"Authentication error: {str(e)}")
         return False
 
 
