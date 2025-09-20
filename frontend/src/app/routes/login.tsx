@@ -1,19 +1,16 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-import {
-  loginSchema,
-  type LoginFormData,
-} from "@/features/login/schemas/login-schema";
+import { Button } from "@/components/ui/button";
 import { useLogin } from "@/features/login/api/login";
+import { loginSchema } from "@/features/login/schemas";
+import type { LoginRequest } from "@/features/login/types";
 
 export const LoginPage = () => {
   const { mutateAsync: handleLogin, isPending, isError } = useLogin();
 
-  const { register, handleSubmit } = useForm<LoginFormData>({
+  const { register, handleSubmit } = useForm<LoginRequest>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -21,7 +18,7 @@ export const LoginPage = () => {
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginRequest) => {
     await handleLogin(data);
   };
 
