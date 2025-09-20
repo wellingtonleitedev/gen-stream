@@ -25,3 +25,13 @@ export interface JobStatus {
   total_ms?: number;
   ttfi_ms?: number;
 }
+
+export interface JobMetrics {
+  job_id: string;
+  status: string;
+  ttfi_ms?: number;
+  total_ms?: number;
+  completed_count: number;
+  failed_count: number;
+  total_count: number;
+}

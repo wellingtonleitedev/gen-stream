@@ -27,7 +27,38 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Run the server:
+3. Copy environment file:
+```bash
+cp .env.example .env
+# Edit the .env file and configure
+```
+
+4. Run the server:
 ```bash
 uvicorn app.main:app --reload --port 8080
 ```
+
+### Frontend
+
+**Prerequisites**
+- Node.js 18+ (install from [nodejs.org](https://nodejs.org) or use `nvm install node`)
+- pnpm (install with `npm install -g pnpm` or see [pnpm.io](https://pnpm.io/installation))
+- Backend server running
+
+1. Install dependencies:
+```bash
+cd frontend
+pnpm install
+```
+
+2. Copy environment file:
+```bash
+cp .env.example .env.local
+```
+
+3. Start development server:
+```bash
+pnpm dev
+```
+
+Open http://localhost:5173 in your browser
