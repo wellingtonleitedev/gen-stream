@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 from typing import Dict, Any, Tuple
 import os
+from .config import config
 
 from .models import Job, JobStatus, ResultStatus
 from .store import job_store
@@ -12,9 +13,9 @@ from .replicate_client import replicate_client
 class JobRunner:
     def __init__(self, max_concurrency: int = None, max_retries: int = None):
         if max_concurrency is None:
-            max_concurrency = int(os.getenv("MAX_CONCURRENCY", "5"))
+            max_concurrency = config.GEN_MAX_CONCURRENCY
         if max_retries is None:
-            max_retries = int(os.getenv("MAX_RETRIES", "3"))
+            max_retries = config.RETRY_ATTEMPTS
         
         self.semaphore = asyncio.Semaphore(max_concurrency)
         self.max_retries = max_retries
