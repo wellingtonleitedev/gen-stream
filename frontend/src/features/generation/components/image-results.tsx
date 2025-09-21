@@ -1,6 +1,21 @@
 import type { JobItem } from "../types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+
+function chunkArray<T>(array: T[], chunkSize: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < array.length; index += chunkSize) {
+    chunks.push(array.slice(index, index + chunkSize));
+  }
+  return chunks;
+}
 
 interface ImageResultProps {
   item: JobItem;
@@ -82,19 +97,39 @@ export function ImageResult({ item, index, className }: ImageResultProps) {
 
 interface ImageResultsGridProps {
   items: JobItem[];
-  className?: string;
+  imagesPerRow?: number;
 }
 
-export function ImageResultsGrid({ items, className }: ImageResultsGridProps) {
+export function ImageResultsGrid({
+  items,
+  imagesPerRow = 5,
+}: ImageResultsGridProps) {
+  const rows =
+    items.length > imagesPerRow ? chunkArray(items, imagesPerRow) : [items];
+
   return (
-    <div
-      className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${className}`}
-      role="grid"
-      aria-label={`Generated images grid with ${items.length} images`}
-    >
-      {items.map((item, index) => (
-        <div key={item.id} role="gridcell">
-          <ImageResult item={item} index={index} />
+    <div className="space-y-6">
+      {rows.map((rowItems, rowIndex) => (
+        <div key={rowIndex} className="w-full">
+          {rows.length > 1 && (
+            <h3 className="mb-3 text-sm font-medium text-gray-600">
+              {`(${rowItems.length} image${rowItems.length !== 1 ? "s" : ""})`}
+            </h3>
+          )}
+          <Carousel className="w-full" opts={{ loop: true }}>
+            <CarouselContent>
+              {rowItems.map((item, index) => (
+                <CarouselItem key={item.id} className="basis-full md:basis-1/3">
+                  <ImageResult
+                    item={item}
+                    index={rowIndex * imagesPerRow + index}
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden xl:flex" />
+            <CarouselNext className="hidden xl:flex" />
+          </Carousel>
         </div>
       ))}
     </div>

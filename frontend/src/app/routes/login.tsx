@@ -7,7 +7,7 @@ import { useLogin } from "@/features/login/api/login";
 import { loginSchema } from "@/features/login/schemas";
 import type { LoginRequest } from "@/features/login/types";
 
-export const LoginPage = () => {
+const LoginPage = () => {
   const { mutateAsync: handleLogin, isPending, isError } = useLogin();
 
   const { register, handleSubmit } = useForm<LoginRequest>({
@@ -50,3 +50,5 @@ export const LoginPage = () => {
     </div>
   );
 };
+
+export default LoginPage;
