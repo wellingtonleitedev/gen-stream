@@ -1,7 +1,7 @@
 import { useRequireAuth } from "@/hooks/use-auth";
 import { GenerationFlow } from "@/features/generation/components";
 
-export const HomePage = () => {
+const HomePage = () => {
   const isAuthenticated = useRequireAuth();
 
   if (!isAuthenticated) {
@@ -28,3 +28,5 @@ export const HomePage = () => {
     </div>
   );
 };
+
+export default HomePage;
